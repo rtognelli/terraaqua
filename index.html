@@ -6283,6 +6283,19 @@ function posizioneCorrente() {
 // ===================== Posizione dell'utente =====================
 
 let miaPosizione = null;   // { lat, lon, precisione }
+// Pagina incorporata in un altro sito (es. anteprima in Google Sites): lì il browser non concede
+// la posizione né l'accesso alle cartelle, quindi quelle funzioni aprono la pagina intera.
+const INCORPORATA = (() => {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+})();
+
+function apriPaginaIntera() {
+    window.open(location.href, "_blank", "noopener");
+}
 let segnaposto = null;
 
 // Area della mappa non coperta dal pannello (su schermi larghi il pannello sta a sinistra).
@@ -6341,6 +6354,10 @@ function disegnaSegnaposto() {
 
 // Chiede la posizione al browser. All'avvio un rifiuto non disturba: resta l'ultima vista usata.
 function cercaPosizione(automatica) {
+    if (INCORPORATA) {
+        if (!automatica) apriPaginaIntera();
+        return;
+    }
     if (!navigator.geolocation) {
         if (!automatica) avviso("Questo browser non fornisce la posizione.", true);
         return;
@@ -6545,6 +6562,10 @@ async function usaCartella(cartella) {
 }
 
 async function scegliCartella() {
+    if (INCORPORATA) {
+        apriPaginaIntera();
+        return;
+    }
     if (!window.showDirectoryPicker) {
         $("input-cartella").click();
         return;
@@ -6811,6 +6832,10 @@ function ripristinaPreferenze() {
 async function avvia() {
     collegaEventi();
     ripristinaPreferenze();
+    if (INCORPORATA) {
+        $("btn-mia-posizione").title = "Apre TerraAqua a schermo intero, dove puoi usare la tua posizione";
+        $("pannello").classList.add("ridotto");   // nell'anteprima si vede soprattutto la mappa
+    }
     riempiStili();
     try {
         griglia = await caricaGriglia();
